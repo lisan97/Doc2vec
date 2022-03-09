@@ -20,6 +20,26 @@ class PV_DM(nn.Module):
         log_probs = F.log_softmax(out, dim=1)
         return log_probs
 
+class PV_DM_Pretrain(nn.Module):
+    def __init__(self, pretrained_doc, pretrained_word, context_size, hidden_size):
+        super(PV_DM_Pretrain, self).__init__()
+        doc_size, _ = list(pretrained_doc.shape)
+        vocab_size, embd_size = list(pretrained_word.shape)
+        self.doc_embeddings = nn.Embedding.from_pretrained(pretrained_doc,freeze=False)
+        self.word_embeddings = nn.Embedding.from_pretrained(pretrained_word,freeze=False)
+        self.linear1 = nn.Linear((2 * context_size+1) * embd_size, hidden_size)
+        self.linear2 = nn.Linear(hidden_size, vocab_size)
+
+    def forward(self, doc_ids,context_ids):
+        batch_size = context_ids.shape[0]
+        doc_embedded = self.doc_embeddings(doc_ids)
+        word_embedded = self.word_embeddings(context_ids)
+        embedded = torch.cat((doc_embedded,word_embedded),dim=1).view(batch_size,-1)
+        hid = F.relu(self.linear1(embedded))
+        out = self.linear2(hid)
+        log_probs = F.log_softmax(out, dim=1)
+        return log_probs
+
 class PV_DM_NegSample(nn.Module):
     def __init__(self, vocab_size,doc_size, embd_size):
         super(PV_DM_NegSample, self).__init__()

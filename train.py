@@ -11,6 +11,7 @@ import seaborn as sns
 from tqdm.auto import tqdm
 from transformers import get_linear_schedule_with_warmup
 import argparse
+import numpy as np
 
 sns.set_style("darkgrid")
 sns.set(rc={'figure.figsize':(12, 8)})
@@ -170,6 +171,25 @@ class Trainer(object):
             predicted_word = self.dataset.word_vocab.get(int(prediction), unk)
         print(color_str(target, 'green'), '\t' if len(target) > 6 else '\t\t',
               doc, left, color_str(predicted_word, 'green' if target == predicted_word else 'red'))
+
+    def save(self):
+        doc_e = self.model.doc_embeddings.state_dict()['weight'].numpy()
+        print('save doc vocab')
+        with open('./embedding/doc.txt', 'w') as f:
+            for v in self.dataset.doc_vocab.values():
+                f.write(v + '\n')
+        print('save doc_embedding.npy')
+        np.save('./embedding/doc_embedding.npy', doc_e)
+        print('save doc_embedding.tsv')
+        with open('./embedding/doc_embedding.tsv', 'w') as f:
+            for doc, v in zip(self.dataset.doc_vocab.values(), doc_e):
+                v = '\t'.join([str(vector) for vector in v])
+                f.write(doc + '\t' + v + '\n')
+        print('save successfully')
+
+    def load_weights(self,file):
+        pretrained_npy = torch.tensor(np.load(file))
+        return pretrained_npy
 
 if __name__ == '__main__':
     args = parser.parse_args()

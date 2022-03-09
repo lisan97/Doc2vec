@@ -13,6 +13,10 @@ app/log/runtime.*
 # Distribution / packaging
 .Python
 __pycache__
+config/*
+data/*
+embedding/*
+model/*
 build/
 develop-eggs/
 dist/
